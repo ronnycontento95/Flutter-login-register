@@ -1,7 +1,10 @@
 import 'package:cooportega/widgets/labels.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:snippet_coder_utils/hex_color.dart';
 
+import '../helpers/mostrar_alerta.dart';
+import '../services/auth_service.dart';
 import '../widgets/boton_azul.dart';
 import '../widgets/custom_input.dart';
 import '../widgets/logo.dart';
@@ -12,16 +15,16 @@ class LoginPage extends StatelessWidget {
     return Scaffold(
         // backgroundColor: HexColor("#ffffff"),
         backgroundColor: Color(0xffF2F2F2),
-        appBar: AppBar(
-          title: Text('Iniciar sesión',
-              style: TextStyle(fontSize: 15, color: HexColor("#0063BD"))),
-          elevation: 1,
-          backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: HexColor("#0063BD")),
-            onPressed: () {},
-          ),
-        ),
+        // appBar: AppBar(
+        //   title: Text('Iniciar sesión',
+        //       style: TextStyle(fontSize: 15, color: HexColor("#0063BD"))),
+        //   elevation: 1,
+        //   backgroundColor: Colors.white,
+        //   leading: IconButton(
+        //     icon: Icon(Icons.arrow_back, color: HexColor("#0063BD")),
+        //     onPressed: () {},
+        //   ),
+        // ),
         body: SafeArea(
           child: SingleChildScrollView(
             // physics: BouncingScrollPhysics(),
@@ -31,7 +34,10 @@ class LoginPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Logo(titulo: 'Messenger'),
+                  Logo(
+                    titulo: 'Messenger',
+                    imagen: 'assets/smartphone.png',
+                  ),
                   _Form(),
                   Labels(
                     ruta: 'register',
@@ -61,6 +67,8 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -89,10 +97,23 @@ class __FormState extends State<_Form> {
           ),
           BotonAzul(
             text: 'Ingrese',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passCtrl.text);
-            },
+            onPressed: authService.autenticando
+                ? () => {}
+                : () async {
+                    FocusScope.of(context).unfocus();
+
+                    final loginOk = await authService.login(
+                        emailCtrl.text.trim(), passCtrl.text.trim());
+
+                    if (loginOk) {
+                      // TODO: Conectar a nuestro socket server
+                      Navigator.pushReplacementNamed(context, 'usuarios');
+                    } else {
+                      // Mostara alerta
+                      mostrarAlerta(context, 'Login incorrecto',
+                          'Revise sus credenciales nuevamente');
+                    }
+                  },
           )
         ],
       ),

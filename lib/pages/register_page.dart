@@ -1,7 +1,10 @@
+import 'package:cooportega/services/auth_service.dart';
 import 'package:cooportega/widgets/labels.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:snippet_coder_utils/hex_color.dart';
 
+import '../helpers/mostrar_alerta.dart';
 import '../widgets/boton_azul.dart';
 import '../widgets/custom_input.dart';
 import '../widgets/logo.dart';
@@ -12,16 +15,16 @@ class RegisterPage extends StatelessWidget {
     return Scaffold(
         // backgroundColor: HexColor("#ffffff"),
         backgroundColor: Color(0xffF2F2F2),
-        appBar: AppBar(
-          title: Text('Iniciar sesión',
-              style: TextStyle(fontSize: 15, color: HexColor("#0063BD"))),
-          elevation: 1,
-          backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: HexColor("#0063BD")),
-            onPressed: () {},
-          ),
-        ),
+        // appBar: AppBar(
+        //   title: Text('Iniciar sesión',
+        //       style: TextStyle(fontSize: 15, color: HexColor("#0063BD"))),
+        //   elevation: 1,
+        //   backgroundColor: Colors.white,
+        //   leading: IconButton(
+        //     icon: Icon(Icons.arrow_back, color: HexColor("#0063BD")),
+        //     onPressed: () {},
+        //   ),
+        // ),
         body: SafeArea(
           child: SingleChildScrollView(
             // physics: BouncingScrollPhysics(),
@@ -31,12 +34,15 @@ class RegisterPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Logo(titulo: 'Registro de Usuarios'),
+                  Logo(
+                    titulo: 'Registro de Usuarios',
+                    imagen: 'assets/user.png',
+                  ),
                   _Form(),
                   Labels(
                     ruta: 'login',
-                    titulo: '¿No tienes cuenta?',
-                    subTitulo: 'Crea una ahora!',
+                    titulo: '¿Ya tienes cuenta?',
+                    subTitulo: 'Ingresa ahora!',
                   ),
                   Text(
                     'Términos y condiciones de uso',
@@ -58,16 +64,18 @@ class _Form extends StatefulWidget {
 class __FormState extends State<_Form> {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
+  final nameCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
     return Container(
       margin: EdgeInsets.only(top: 10),
       padding: EdgeInsets.symmetric(horizontal: 30),
       child: Column(
         children: <Widget>[
           Text(
-            "Estimad socio/cliente, si es tu primer ingreso debes utilizar el usuario y contraseña Ortegamovil",
+            "Estimad socio/cliente ingrese sus datos",
             style: TextStyle(
               fontSize: 14,
               color: HexColor("#6B6B6B"),
@@ -75,6 +83,12 @@ class __FormState extends State<_Form> {
             ),
           ),
           const Divider(),
+          CustomInput(
+            icon: Icons.perm_identity,
+            placeholder: 'Nombre',
+            keyboardType: TextInputType.emailAddress,
+            textController: nameCtrl,
+          ),
           CustomInput(
             icon: Icons.mail_outline,
             placeholder: 'Correo',
@@ -88,11 +102,25 @@ class __FormState extends State<_Form> {
             isPassword: true,
           ),
           BotonAzul(
-            text: 'Ingrese',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passCtrl.text);
-            },
+            text: 'Crear cuenta',
+            onPressed: authService.autenticando
+                ? () => {}
+                : () async {
+                    print(nameCtrl.text);
+                    print(emailCtrl.text);
+                    print(passCtrl.text);
+                    final registroOk = await authService.register(
+                        nameCtrl.text.trim(),
+                        emailCtrl.text.trim(),
+                        passCtrl.text.trim());
+
+                    if (registroOk == true) {
+                      //  TODO: Conectar socket server
+                      Navigator.pushReplacementNamed(context, 'usuarios');
+                    } else {
+                      mostrarAlerta(context, 'Registro incorrecto', registroOk);
+                    }
+                  },
           )
         ],
       ),
